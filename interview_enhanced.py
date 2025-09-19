@@ -316,8 +316,15 @@ class InterviewChatbot:
             """, unsafe_allow_html=True)
     
     def listen(self) -> str:
-        """Listen for user speech input with improved quality"""
+        """Listen for user speech input with improved quality and error handling"""
         try:
+            # Check if PyAudio is available
+            try:
+                import pyaudio
+            except ImportError:
+                st.error("PyAudio not installed. Please install it with: pip install pyaudio")
+                return "PyAudio not available"
+            
             with sr.Microphone() as source:
                 st.info("🎤 Listening... Speak clearly now!")
                 
@@ -349,6 +356,13 @@ class InterviewChatbot:
         except sr.RequestError as e:
             st.error(f"Speech recognition service error: {e}")
             return "Speech recognition service unavailable"
+        except OSError as e:
+            if "PyAudio" in str(e):
+                st.error("PyAudio error. Please check your microphone permissions and PyAudio installation.")
+                return "Microphone access error"
+            else:
+                st.error(f"Audio system error: {e}")
+                return "Audio system error"
         except Exception as e:
             st.error(f"Speech recognition error: {e}")
             return "Error in speech recognition"
@@ -472,27 +486,68 @@ class InterviewChatbot:
         }
     
     def evaluate_answer(self, question: str, answer: str, expected_keywords: List[str]) -> Dict[str, Any]:
-        """Evaluate candidate's answer using AI"""
+        """Evaluate candidate's answer using AI with improved error handling"""
         prompt = f"""
-        Evaluate this interview answer:
+        Evaluate this interview answer and provide ONLY valid JSON response:
         
         Question: {question}
         Answer: {answer}
         Expected Keywords: {', '.join(expected_keywords)}
         
-        Provide evaluation in JSON format:
+        IMPORTANT: Respond with ONLY valid JSON in this exact format:
         {{
-            "score": score_out_of_10,
-            "strengths": ["strength1", "strength2"],
-            "areas_for_improvement": ["area1", "area2"],
-            "keyword_match": percentage_of_keywords_mentioned,
-            "feedback": "detailed feedback message"
+            "score": 8,
+            "strengths": ["Clear communication", "Relevant experience"],
+            "areas_for_improvement": ["Could provide more examples", "Technical depth"],
+            "keyword_match": 75,
+            "feedback": "Good answer with room for improvement"
         }}
+        
+        Do not include any text before or after the JSON. Only return the JSON object.
         """
         
         try:
             response = self.model.generate_content(prompt)
-            return json.loads(response.text)
+            response_text = response.text.strip()
+            
+            # Clean the response text
+            if response_text.startswith('```json'):
+                response_text = response_text[7:]
+            if response_text.endswith('```'):
+                response_text = response_text[:-3]
+            response_text = response_text.strip()
+            
+            # Try to parse JSON
+            try:
+                evaluation = json.loads(response_text)
+                
+                # Validate the response structure
+                required_keys = ['score', 'strengths', 'areas_for_improvement', 'keyword_match', 'feedback']
+                if all(key in evaluation for key in required_keys):
+                    return evaluation
+                else:
+                    raise ValueError("Missing required keys in evaluation")
+                    
+            except (json.JSONDecodeError, ValueError) as json_error:
+                st.warning(f"JSON parsing failed: {json_error}")
+                st.info(f"Raw response: {response_text}")
+                
+                # Try to extract score from text if JSON fails
+                score = 7
+                if "score" in response_text.lower():
+                    import re
+                    score_match = re.search(r'"score":\s*(\d+)', response_text)
+                    if score_match:
+                        score = int(score_match.group(1))
+                
+                return {
+                    "score": score,
+                    "strengths": ["Response received"],
+                    "areas_for_improvement": ["Could be more detailed"],
+                    "keyword_match": 60,
+                    "feedback": f"Answer processed. Raw response: {response_text[:100]}..."
+                }
+                
         except Exception as e:
             st.error(f"Error evaluating answer: {e}")
             return {
