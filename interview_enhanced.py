@@ -161,29 +161,69 @@ class InterviewChatbot:
         self.tts_engine.setProperty('pitch', 0.5)  # Neutral pitch
         
     def speak_web(self, text: str):
-        """Use web-based TTS for better quality"""
+        """Use web-based TTS for better quality with real-time text display"""
         try:
+            # Display the text in real-time while speaking
+            st.markdown(f"**🎤 AI Speaking:** {text}")
+            
             # Create audio element with Web Speech API
             audio_html = f"""
             <script>
             function speakText() {{
                 if ('speechSynthesis' in window) {{
-                    const utterance = new SpeechSynthesisUtterance('{text}');
-                    utterance.rate = 0.9;
-                    utterance.pitch = 1.0;
-                    utterance.volume = 0.8;
+                    // Cancel any ongoing speech
+                    speechSynthesis.cancel();
                     
-                    // Try to use a better voice
+                    const utterance = new SpeechSynthesisUtterance('{text.replace("'", "\\'")}');
+                    
+                    // Optimized settings for better quality
+                    utterance.rate = 0.85;  // Slightly slower for clarity
+                    utterance.pitch = 1.1;  // Slightly higher pitch
+                    utterance.volume = 0.9; // Higher volume
+                    
+                    // Try to use the best available voice
                     const voices = speechSynthesis.getVoices();
-                    const preferredVoice = voices.find(voice => 
-                        voice.name.includes('Samantha') || 
-                        voice.name.includes('Alex') || 
-                        voice.name.includes('Victoria')
-                    );
+                    let bestVoice = null;
                     
-                    if (preferredVoice) {{
-                        utterance.voice = preferredVoice;
+                    // Priority order for voice selection
+                    const voicePreferences = [
+                        'Samantha', 'Alex', 'Victoria', 'Daniel', 'Karen', 
+                        'Moira', 'Tessa', 'Veena', 'Google UK English Female',
+                        'Google US English Female', 'Microsoft Zira Desktop'
+                    ];
+                    
+                    for (const preference of voicePreferences) {{
+                        bestVoice = voices.find(voice => 
+                            voice.name.includes(preference) && 
+                            voice.lang.startsWith('en')
+                        );
+                        if (bestVoice) break;
                     }}
+                    
+                    // Fallback to first English voice
+                    if (!bestVoice) {{
+                        bestVoice = voices.find(voice => voice.lang.startsWith('en'));
+                    }}
+                    
+                    if (bestVoice) {{
+                        utterance.voice = bestVoice;
+                    }}
+                    
+                    utterance.onstart = function() {{
+                        console.log('Speech started with voice:', utterance.voice?.name);
+                        // Highlight the speaking text
+                        document.querySelector('.speaking-text')?.classList.add('speaking');
+                    }};
+                    
+                    utterance.onend = function() {{
+                        console.log('Speech ended');
+                        // Remove highlight
+                        document.querySelector('.speaking-text')?.classList.remove('speaking');
+                    }};
+                    
+                    utterance.onerror = function(event) {{
+                        console.error('Speech error:', event.error);
+                    }};
                     
                     speechSynthesis.speak(utterance);
                 }} else {{
@@ -198,6 +238,21 @@ class InterviewChatbot:
                 speakText();
             }}
             </script>
+            
+            <style>
+            .speaking {{
+                background-color: #e3f2fd !important;
+                border-left: 4px solid #2196f3 !important;
+                padding-left: 8px !important;
+                animation: pulse 1s infinite;
+            }}
+            
+            @keyframes pulse {{
+                0% {{ opacity: 1; }}
+                50% {{ opacity: 0.7; }}
+                100% {{ opacity: 1; }}
+            }}
+            </style>
             """
             st.markdown(audio_html, unsafe_allow_html=True)
             
@@ -209,23 +264,48 @@ class InterviewChatbot:
     def speak(self, text: str):
         """Convert text to speech with improved quality (local fallback)"""
         try:
+            # Display the text in real-time while speaking
+            st.markdown(f"**🎤 AI Speaking (Local TTS):** {text}")
+            
             # Try to use a better voice if available
             voices = self.tts_engine.getProperty('voices')
             if voices:
-                # Look for high-quality voices
-                for voice in voices:
-                    if any(keyword in voice.name.lower() for keyword in ['samantha', 'alex', 'victoria', 'daniel']):
-                        self.tts_engine.setProperty('voice', voice.id)
-                        break
+                # Look for high-quality voices with better priority
+                voice_priority = ['samantha', 'alex', 'victoria', 'daniel', 'karen', 'moira', 'tessa', 'veena']
+                
+                for priority_voice in voice_priority:
+                    for voice in voices:
+                        if priority_voice in voice.name.lower():
+                            self.tts_engine.setProperty('voice', voice.id)
+                            break
+                    else:
+                        continue
+                    break
+                
+                # If no priority voice found, use first available
+                if not any(priority_voice in voice.name.lower() for voice in voices for priority_voice in voice_priority):
+                    self.tts_engine.setProperty('voice', voices[0].id)
             
-            # Speak with pauses for better clarity
+            # Optimized settings for better quality
+            self.tts_engine.setProperty('rate', 160)  # Moderate speed for clarity
+            self.tts_engine.setProperty('volume', 0.9)  # Higher volume
+            self.tts_engine.setProperty('pitch', 0.7)  # Slightly higher pitch for clarity
+            
+            # Speak with natural pauses for better clarity
             sentences = text.split('. ')
-            for sentence in sentences:
+            for i, sentence in enumerate(sentences):
                 if sentence.strip():
-                    self.tts_engine.say(sentence.strip() + '.')
-                    self.tts_engine.runAndWait()
-                    time.sleep(0.3)  # Small pause between sentences
+                    # Add period if not present
+                    if not sentence.strip().endswith('.'):
+                        sentence = sentence.strip() + '.'
                     
+                    self.tts_engine.say(sentence.strip())
+                    self.tts_engine.runAndWait()
+                    
+                    # Add small pause between sentences
+                    if i < len(sentences) - 1:
+                        time.sleep(0.2)
+                        
         except Exception as e:
             st.error(f"TTS Error: {e}")
             # Fallback: show text prominently
