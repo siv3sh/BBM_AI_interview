@@ -1,0 +1,51 @@
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Database files
+*.db
+*.sqlite3
+
+# ChromaDB
+chroma_db/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Resume files (for privacy)
+*.pdf
+*.docx
+*.doc
+
+# API keys and secrets
+*secret*
+*key*
+*password*
+*token*

@@ -1,0 +1,5 @@
+timestamp,app,prediction,ground_truth,Exact Match,F1 Score,ROUGE-1,ROUGE-L,Semantic Similarity
+2025-08-25 08:49:44,agenticATS.py,"Python, SQL, Machine Learning","Python, SQL, Machine Learning, AWS",0.0,0.888888888888889,0.888888888888889,0.888888888888889,0.7892602682113647
+2025-08-25 08:49:45,Chat.py,The capital of France is Paris.,Paris is the capital of France.,0.0,1.0,1.0,0.6666666666666666,0.9893565773963928
+2025-08-25 08:49:46,dashboard.py,"Placement rate is 80%, Google hired the most students.","80% students placed, majority hired by Google.",0.0,0.5,0.5,0.25,0.8998486399650574
+2025-08-25 08:49:46,interview.py,"Candidate mentioned Python, SQL but missed ML pipelines.","Candidate knows Python and SQL, but lacked ML pipeline details.",0.0,0.5555555555555556,0.6666666666666665,0.6666666666666665,0.8254530429840088
