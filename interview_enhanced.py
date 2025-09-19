@@ -14,6 +14,9 @@ import speech_recognition as sr
 import pyttsx3
 import threading
 import queue
+from gtts import gTTS
+import pygame
+import io
 
 # Page configuration
 st.set_page_config(
@@ -160,11 +163,100 @@ class InterviewChatbot:
         self.tts_engine.setProperty('volume', 0.8)  # Moderate volume
         self.tts_engine.setProperty('pitch', 0.5)  # Neutral pitch
         
+    def speak_gtts(self, text: str):
+        """Use Google Text-to-Speech (gTTS) for high-quality voice synthesis"""
+        try:
+            # Display the text in real-time while speaking
+            st.markdown(f"**🎤 AI Speaking (gTTS):** {text}")
+            
+            # Create gTTS object with optimized settings
+            tts = gTTS(
+                text=text,
+                lang='en',  # English
+                slow=False,  # Normal speed
+                tld='com'  # Use .com domain for better quality
+            )
+            
+            # Generate audio in memory
+            audio_buffer = io.BytesIO()
+            tts.write_to_fp(audio_buffer)
+            audio_buffer.seek(0)
+            
+            # Initialize pygame mixer if not already done
+            if not pygame.mixer.get_init():
+                pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
+            
+            # Load and play the audio
+            pygame.mixer.music.load(audio_buffer)
+            pygame.mixer.music.play()
+            
+            # Wait for audio to finish playing
+            while pygame.mixer.music.get_busy():
+                time.sleep(0.1)
+            
+            # Clean up
+            audio_buffer.close()
+            
+        except Exception as e:
+            st.error(f"gTTS Error: {e}")
+            # Fallback to web TTS
+            self.speak_web(text)
+    
+    def speak_gtts_streamlit(self, text: str):
+        """Use gTTS with Streamlit audio component for better integration"""
+        try:
+            # Display the text in real-time while speaking
+            st.markdown(f"**🎤 AI Speaking (gTTS):** {text}")
+            
+            # Create gTTS object
+            tts = gTTS(
+                text=text,
+                lang='en',
+                slow=False,
+                tld='com'
+            )
+            
+            # Generate audio in memory
+            audio_buffer = io.BytesIO()
+            tts.write_to_fp(audio_buffer)
+            audio_buffer.seek(0)
+            
+            # Convert to base64 for Streamlit audio component
+            audio_data = audio_buffer.getvalue()
+            audio_base64 = base64.b64encode(audio_data).decode()
+            
+            # Create audio HTML element
+            audio_html = f"""
+            <audio controls autoplay style="width: 100%; margin: 10px 0;">
+                <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+                Your browser does not support the audio element.
+            </audio>
+            <script>
+                // Auto-play the audio
+                document.addEventListener('DOMContentLoaded', function() {{
+                    const audio = document.querySelector('audio');
+                    if (audio) {{
+                        audio.play().catch(e => console.log('Autoplay prevented:', e));
+                    }}
+                }});
+            </script>
+            """
+            
+            st.markdown(audio_html, unsafe_allow_html=True)
+            
+            # Clean up
+            audio_buffer.close()
+            
+        except Exception as e:
+            st.error(f"gTTS Streamlit Error: {e}")
+            # Fallback to web TTS
+            self.speak_web(text)
+    
     def speak_web(self, text: str):
         """Use web-based TTS for better quality with real-time text display"""
         try:
             # Display the text in real-time while speaking
-            st.markdown(f"**🎤 AI Speaking:** {text}")
+            st.markdown(f"**🎤 AI Speaking (Web TTS):** {text}")
             
             # Create audio element with Web Speech API
             audio_html = f"""
@@ -762,7 +854,7 @@ def main():
             """, unsafe_allow_html=True)
             
             if st.button("🎤 Play Greeting"):
-                chatbot.speak_web(interview_plan['greeting'])
+                chatbot.speak_gtts_streamlit(interview_plan['greeting'])
         
         # Show current question
         if current_q < len(interview_plan['questions']):
@@ -781,7 +873,7 @@ def main():
             
             with col1:
                 if st.button("🎤 Ask Question"):
-                    chatbot.speak_web(question_data['question'])
+                    chatbot.speak_gtts_streamlit(question_data['question'])
             
             with col2:
                 if st.button("🎧 Listen for Answer"):
@@ -831,7 +923,7 @@ def main():
             """, unsafe_allow_html=True)
             
             if st.button("🎤 Play Closing"):
-                chatbot.speak_web(interview_plan['closing'])
+                chatbot.speak_gtts_streamlit(interview_plan['closing'])
             
             # Show final summary
             st.markdown("### 📊 Interview Summary")
