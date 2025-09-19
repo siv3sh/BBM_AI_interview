@@ -401,7 +401,7 @@ class InterviewChatbot:
             return ""
     
     def generate_interview_plan(self, resume_text: str, job_role: str, duration_minutes: int) -> Dict[str, Any]:
-        """Generate interview plan based on resume, job role, and duration"""
+        """Generate interview plan based on resume, job role, and duration with robust JSON handling"""
         
         # Calculate complexity based on duration
         if duration_minutes <= 15:
@@ -422,32 +422,62 @@ class InterviewChatbot:
         
         Generate an interview plan with {num_questions} questions of {complexity} complexity.
         
-        Include:
-        1. Professional greeting
-        2. {num_questions} interview questions covering:
-           - Technical skills
-           - Behavioral questions
-           - Role-specific questions
-           - Problem-solving scenarios
-        
-        Format as JSON with this structure:
+        IMPORTANT: Respond with ONLY valid JSON in this exact format:
         {{
-            "greeting": "Professional greeting message",
+            "greeting": "Hello! Welcome to your interview. I'm your AI interviewer. Let's begin with a few questions to get to know you better.",
             "questions": [
                 {{
-                    "question": "Question text",
-                    "category": "technical/behavioral/role-specific",
-                    "expected_keywords": ["keyword1", "keyword2"],
-                    "time_limit": estimated_time_in_seconds
+                    "question": "Tell me about yourself and your background.",
+                    "category": "behavioral",
+                    "expected_keywords": ["experience", "skills", "background"],
+                    "time_limit": 120
+                }},
+                {{
+                    "question": "What are your key technical skills?",
+                    "category": "technical", 
+                    "expected_keywords": ["programming", "tools", "technologies"],
+                    "time_limit": 90
                 }}
             ],
-            "closing": "Professional closing message"
+            "closing": "Thank you for your time. The interview is now complete. We'll review your responses and get back to you soon."
         }}
+        
+        Do not include any text before or after the JSON. Only return the JSON object.
         """
         
         try:
             response = self.model.generate_content(prompt)
-            return json.loads(response.text)
+            response_text = response.text.strip()
+            
+            # Clean the response text
+            if response_text.startswith('```json'):
+                response_text = response_text[7:]
+            if response_text.endswith('```'):
+                response_text = response_text[:-3]
+            response_text = response_text.strip()
+            
+            # Try to parse JSON
+            try:
+                interview_plan = json.loads(response_text)
+                
+                # Validate the response structure
+                required_keys = ['greeting', 'questions', 'closing']
+                if all(key in interview_plan for key in required_keys):
+                    # Validate questions structure
+                    if isinstance(interview_plan['questions'], list) and len(interview_plan['questions']) > 0:
+                        return interview_plan
+                    else:
+                        raise ValueError("Invalid questions structure")
+                else:
+                    raise ValueError("Missing required keys in interview plan")
+                    
+            except (json.JSONDecodeError, ValueError) as json_error:
+                st.warning(f"JSON parsing failed for interview plan: {json_error}")
+                st.info(f"Raw response: {response_text[:200]}...")
+                
+                # Return default plan if JSON parsing fails
+                return self.get_default_interview_plan(duration_minutes)
+                
         except Exception as e:
             st.error(f"Error generating interview plan: {e}")
             return self.get_default_interview_plan(duration_minutes)
