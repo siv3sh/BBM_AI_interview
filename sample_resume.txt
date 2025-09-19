@@ -1,0 +1,56 @@
+John Smith
+Software Engineer
+Email: john.smith@email.com | Phone: (555) 123-4567
+LinkedIn: linkedin.com/in/johnsmith | GitHub: github.com/johnsmith
+
+PROFESSIONAL SUMMARY
+Experienced software engineer with 5+ years of experience in full-stack development, 
+specializing in Python, JavaScript, and cloud technologies. Proven track record of 
+delivering scalable web applications and leading development teams.
+
+TECHNICAL SKILLS
+Programming Languages: Python, JavaScript, Java, C++, SQL
+Frameworks: Django, Flask, React, Node.js, Express.js
+Cloud Platforms: AWS, Google Cloud Platform, Azure
+Databases: PostgreSQL, MongoDB, Redis
+Tools: Docker, Kubernetes, Git, Jenkins, CI/CD
+
+PROFESSIONAL EXPERIENCE
+
+Senior Software Engineer | TechCorp Inc. | 2021 - Present
+• Led development of microservices architecture serving 1M+ users
+• Implemented CI/CD pipelines reducing deployment time by 60%
+• Mentored junior developers and conducted code reviews
+• Collaborated with cross-functional teams on product roadmap
+
+Software Engineer | StartupXYZ | 2019 - 2021
+• Developed RESTful APIs using Python/Django
+• Built responsive web applications with React.js
+• Implemented automated testing increasing code coverage to 90%
+• Participated in agile development processes
+
+EDUCATION
+Bachelor of Science in Computer Science
+University of Technology | 2015 - 2019
+GPA: 3.8/4.0
+
+CERTIFICATIONS
+• AWS Certified Solutions Architect
+• Google Cloud Professional Developer
+• Certified Kubernetes Administrator
+
+PROJECTS
+E-commerce Platform: Built a full-stack e-commerce solution using Django and React
+• Implemented payment processing with Stripe API
+• Designed responsive UI with modern CSS frameworks
+• Achieved 99.9% uptime with proper monitoring
+
+Machine Learning Pipeline: Developed ML pipeline for data analysis
+• Used Python, Pandas, and Scikit-learn
+• Implemented automated model training and deployment
+• Reduced processing time by 40% through optimization
+
+ACHIEVEMENTS
+• Employee of the Year 2022 at TechCorp Inc.
+• Published 3 technical articles on software architecture
+• Speaker at 2 tech conferences on microservices
