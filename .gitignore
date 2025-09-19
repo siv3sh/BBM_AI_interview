@@ -49,3 +49,13 @@ chroma_db/
 *key*
 *password*
 *token*
+
+# Streamlit Cloud specific
+secrets.toml
+.streamlit/secrets.toml
+
+# Keep these files for deployment
+!.streamlit/config.toml
+!requirements.txt
+!app.py
+!interview_assistant.py

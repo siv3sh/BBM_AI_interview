@@ -575,10 +575,14 @@ class ConversationalInterviewAssistant:
 
 
 def main():
-    st.markdown("""
+    # Check if running on Streamlit Cloud
+    is_cloud = "share.streamlit.io" in st.get_option("server.baseUrlPath") or "share.streamlit.io" in str(st.get_option("server.headless"))
+    
+    st.markdown(f"""
     <div class="assistant-container">
         <h1>🤖 AI Interview Assistant</h1>
         <p>Manual Question Count - Clear SELECTED/REJECTED Results</p>
+        {"<p style='font-size: 0.8em; opacity: 0.8;'>☁️ Running on Streamlit Cloud</p>" if is_cloud else ""}
     </div>
     """, unsafe_allow_html=True)
     
@@ -586,15 +590,21 @@ def main():
     with st.sidebar:
         st.markdown("### ⚙️ Setup")
         
-        # Google AI API Key (required)
-        api_key = st.text_input(
-            "Google AI API Key:",
-            type="password",
-            help="Get your API key from https://aistudio.google.com/app/apikey"
-        )
+        # Try to get API key from secrets first (for Streamlit Cloud)
+        try:
+            api_key = st.secrets["GOOGLE_AI_API_KEY"]
+            st.success("✅ API key loaded from secrets")
+        except:
+            # Fallback to manual input (for local development)
+            api_key = st.text_input(
+                "Google AI API Key:",
+                type="password",
+                help="Get your API key from https://aistudio.google.com/app/apikey"
+            )
         
         if not api_key:
             st.warning("⚠️ Please enter your Google AI API key")
+            st.info("💡 For Streamlit Cloud: Add your API key in the secrets section")
             return
         
         # Free TTS Options

@@ -1,17 +1,31 @@
+# Core Streamlit and AI dependencies
 streamlit>=1.28.0
 google-generativeai>=0.3.0
-speechrecognition>=3.10.0
-pyttsx3>=2.90
-pyaudio>=0.2.14
-gtts>=2.5.4
-pygame>=2.6.1
-pdfplumber>=0.9.0
-python-docx>=0.8.11
 langchain>=0.1.0
 langchain-groq>=0.1.0
 langchain-community>=0.0.20
-pydantic>=2.0.0
-plotly>=5.15.0
+
+# Resume processing
+pdfplumber>=0.9.0
+python-docx>=0.8.11
+
+# Speech and audio
+speechrecognition>=3.10.0
+pyttsx3>=2.90
+gtts>=2.4.0
+pygame>=2.5.0
+edge-tts>=6.1.0
+
+# Data processing
 pandas>=2.0.0
 numpy>=1.24.0
+plotly>=5.15.0
+
+# Vector database
+chromadb>=0.4.0
+
+# Additional utilities
+pydantic>=2.0.0
 python-dotenv>=1.0.0
+requests>=2.31.0
+asyncio-mqtt>=0.13.0
