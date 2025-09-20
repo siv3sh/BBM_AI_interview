@@ -9,11 +9,9 @@ langchain-community>=0.0.20
 pdfplumber>=0.9.0
 python-docx>=0.8.11
 
-# Speech and audio
+# Speech and audio (optional - web-based TTS preferred)
 speechrecognition>=3.10.0
-pyttsx3>=2.90
 gtts>=2.4.0
-pygame>=2.5.0
 edge-tts>=6.1.0
 
 # Data processing
@@ -28,4 +26,6 @@ chromadb>=0.4.0
 pydantic>=2.0.0
 python-dotenv>=1.0.0
 requests>=2.31.0
-asyncio-mqtt>=0.13.0
+
+# Note: pyttsx3 and pygame removed due to eSpeak dependency issues
+# Web-based TTS (Edge TTS) is used instead for better compatibility

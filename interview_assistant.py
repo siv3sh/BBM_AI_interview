@@ -10,15 +10,35 @@ import tempfile
 import os
 import base64
 from typing import List, Dict, Any
-import speech_recognition as sr
-import pyttsx3
-import threading
-import queue
-from gtts import gTTS
-import pygame
 import io
-import edge_tts
 import asyncio
+
+# Optional imports with fallbacks
+try:
+    import speech_recognition as sr
+    SPEECH_RECOGNITION_AVAILABLE = True
+except ImportError:
+    SPEECH_RECOGNITION_AVAILABLE = False
+    st.warning("Speech recognition not available. Voice input disabled.")
+
+try:
+    import pyttsx3
+    PYTTSX3_AVAILABLE = True
+except ImportError:
+    PYTTSX3_AVAILABLE = False
+
+try:
+    from gtts import gTTS
+    GTTS_AVAILABLE = True
+except ImportError:
+    GTTS_AVAILABLE = False
+
+try:
+    import edge_tts
+    EDGE_TTS_AVAILABLE = True
+except ImportError:
+    EDGE_TTS_AVAILABLE = False
+    st.warning("Edge TTS not available. Text-to-speech may be limited.")
 
 # Page configuration
 st.set_page_config(
@@ -110,9 +130,20 @@ class ConversationalInterviewAssistant:
         self.model = genai.GenerativeModel('gemini-1.5-flash')
         
         # Initialize speech recognition and TTS
-        self.recognizer = sr.Recognizer()
-        self.tts_engine = pyttsx3.init()
-        self.setup_tts()
+        if SPEECH_RECOGNITION_AVAILABLE:
+            self.recognizer = sr.Recognizer()
+        else:
+            self.recognizer = None
+            
+        if PYTTSX3_AVAILABLE:
+            try:
+                self.tts_engine = pyttsx3.init()
+                self.setup_tts()
+            except Exception as e:
+                st.warning(f"Local TTS initialization failed: {e}. Using web-based TTS only.")
+                self.tts_engine = None
+        else:
+            self.tts_engine = None
         
         # Conversation state
         self.conversation_history = []
@@ -124,21 +155,29 @@ class ConversationalInterviewAssistant:
         
     def setup_tts(self):
         """Configure text-to-speech engine for conversational feel"""
-        voices = self.tts_engine.getProperty('voices')
-        if voices:
-            for voice in voices:
-                if any(name in voice.name.lower() for name in ['samantha', 'alex', 'victoria', 'karen']):
-                    self.tts_engine.setProperty('voice', voice.id)
-                    break
-            else:
-                self.tts_engine.setProperty('voice', voices[0].id)
-        
-        self.tts_engine.setProperty('rate', 170)
-        self.tts_engine.setProperty('volume', 0.8)
-        self.tts_engine.setProperty('pitch', 0.6)
+        try:
+            voices = self.tts_engine.getProperty('voices')
+            if voices:
+                for voice in voices:
+                    if any(name in voice.name.lower() for name in ['samantha', 'alex', 'victoria', 'karen']):
+                        self.tts_engine.setProperty('voice', voice.id)
+                        break
+                else:
+                    self.tts_engine.setProperty('voice', voices[0].id)
+            
+            self.tts_engine.setProperty('rate', 170)
+            self.tts_engine.setProperty('volume', 0.8)
+            self.tts_engine.setProperty('pitch', 0.6)
+        except Exception as e:
+            # Fallback: disable local TTS if eSpeak is not available
+            st.warning(f"Local TTS not available: {e}. Using web-based TTS only.")
+            self.tts_engine = None
     
     def speak_edge_tts(self, text: str, emotion: str = "friendly"):
         """Use Microsoft Edge TTS (free and high-quality)"""
+        if not EDGE_TTS_AVAILABLE:
+            return self.speak_gtts_streamlit(text, emotion)
+            
         try:
             emotion_icons = {
                 "friendly": "😊",
@@ -205,6 +244,15 @@ class ConversationalInterviewAssistant:
     
     def speak_gtts_streamlit(self, text: str, emotion: str = "friendly"):
         """Fallback to gTTS with Streamlit integration"""
+        if not GTTS_AVAILABLE:
+            # Final fallback to text display only
+            st.markdown(f"""
+            <div class="assistant-bubble">
+                <strong>🤖 Assistant:</strong> {text}
+            </div>
+            """, unsafe_allow_html=True)
+            return
+            
         try:
             emotion_icons = {
                 "friendly": "😊",
@@ -265,6 +313,10 @@ class ConversationalInterviewAssistant:
     
     def listen_for_command(self) -> str:
         """Listen for voice commands with conversational context"""
+        if not SPEECH_RECOGNITION_AVAILABLE or not self.recognizer:
+            st.error("Speech recognition not available. Please use text input.")
+            return "Speech recognition not available"
+            
         try:
             with sr.Microphone() as source:
                 st.markdown("""
@@ -811,10 +863,11 @@ def main():
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
-                    if st.button("🎧 Voice Answer", use_container_width=True):
+                    voice_disabled = not SPEECH_RECOGNITION_AVAILABLE
+                    if st.button("🎧 Voice Answer", use_container_width=True, disabled=voice_disabled):
                         answer = assistant.listen_for_command()
                         
-                        if answer and answer not in ["No response detected", "Could not understand clearly"]:
+                        if answer and answer not in ["No response detected", "Could not understand clearly", "Speech recognition not available"]:
                             # Store answer and move to next question
                             st.session_state[f'answer_{current_q}'] = answer
                             st.session_state.current_question += 1
@@ -829,6 +882,9 @@ def main():
                     if st.button("⏸️ Pause Interview", use_container_width=True):
                         st.session_state.continuous_mode = False
                         st.rerun()
+                
+                if voice_disabled:
+                    st.info("🎤 Voice input not available. Please use text input.")
                 
                 # Text input for typing answers
                 if st.session_state.get(f'show_text_input_{current_q}', False):
@@ -885,10 +941,11 @@ def main():
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
-                    if st.button("🎧 Voice Answer"):
+                    voice_disabled = not SPEECH_RECOGNITION_AVAILABLE
+                    if st.button("🎧 Voice Answer", disabled=voice_disabled):
                         answer = assistant.listen_for_command()
                         
-                        if answer and answer not in ["No response detected", "Could not understand clearly"]:
+                        if answer and answer not in ["No response detected", "Could not understand clearly", "Speech recognition not available"]:
                             # Store answer
                             st.session_state[f'answer_{current_q}'] = answer
                             st.success("Answer recorded! Moving to next question...")
@@ -903,6 +960,9 @@ def main():
                     if st.button("🔄 Switch to Continuous"):
                         st.session_state.continuous_mode = True
                         st.rerun()
+                
+                if voice_disabled:
+                    st.info("🎤 Voice input not available. Please use text input.")
                 
                 # Text input for typing answers
                 if st.session_state.get(f'show_text_input_{current_q}', False):
