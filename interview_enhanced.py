@@ -132,7 +132,7 @@ st.markdown("""
 class InterviewChatbot:
     def __init__(self, api_key: str):
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
         self.questions = []
         self.current_question_index = 0
         self.answers = []

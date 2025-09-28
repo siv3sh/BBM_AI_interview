@@ -27,7 +27,7 @@ def load_environment():
         'CHROMA_DB_PATH': './chroma_db',
         'CHROMA_COLLECTION_NAME': 'deepseekkk_rag1',
         'GROQ_MODEL': 'llama3-8b-8192',
-        'GOOGLE_MODEL': 'gemini-1.5-flash',
+        'GOOGLE_MODEL': 'gemini-2.0-flash-exp',
         'EMBEDDING_MODEL': 'models/embedding-001',
         'RAG_SIMILARITY_THRESHOLD': '0.7',
         'LOG_LEVEL': 'INFO',
